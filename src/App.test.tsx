@@ -1,12 +1,18 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
+vi.mock("./components/PenaltySceneCanvas", () => ({
+  PenaltySceneCanvas: () => <div data-testid="penalty-scene" />
+}));
+
 describe("App", () => {
-  it("renders the penalty practice shell", () => {
+  it("renders the playable penalty interface shell", () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "12 碼射門練習場" })).toBeInTheDocument();
-    expect(screen.getByLabelText("game status")).toHaveTextContent("Penalty Kick 3D");
+    expect(screen.getByText("0 / 0")).toBeInTheDocument();
+    expect(screen.getByLabelText("Reset round")).toBeInTheDocument();
+    expect(screen.getByTestId("penalty-scene")).toBeInTheDocument();
   });
 });

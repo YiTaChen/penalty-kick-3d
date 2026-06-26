@@ -2,6 +2,17 @@
 
 A browser-based 3D penalty-kick prototype built with React, Three.js, and TDD.
 
+Repository: <https://github.com/YiTaChen/penalty-kick-3d>
+
+## Current Prototype
+
+- 3D low-poly penalty-kick scene rendered with React Three Fiber.
+- Pointer drag aim controls for target, power, and curve.
+- Tested shot physics, goal/result detection, keeper decision logic, and round scoring.
+- Adjustable keeper difficulty.
+- Responsive desktop/mobile HUD.
+- Self-generated ball, pitch, goal, net, player, and keeper geometry.
+
 ## Direction
 
 - Focus first on a satisfying 12-yard penalty flow.
@@ -11,17 +22,23 @@ A browser-based 3D penalty-kick prototype built with React, Three.js, and TDD.
 
 ## Planned TDD Phases
 
-1. Project scaffold with Vitest.
-2. Shot vector and ball-flight calculation.
-3. Goal/result detection.
-4. Keeper decision logic.
-5. Interactive Three.js scene.
-6. Documentation and asset credits.
+1. Project scaffold with Vitest. Done.
+2. Shot vector and ball-flight calculation. Done.
+3. Goal/result detection. Done.
+4. Keeper decision logic. Done.
+5. Aim mapping and round scoring. Done.
+6. Interactive Three.js scene. Done.
+7. Documentation, asset credits, and CI. Done.
 
 ## Commands
 
 ```bash
 npm install
 npm test
+npm run build
 npm run dev
 ```
+
+## Notes
+
+The current prototype intentionally avoids external art assets. The next asset pass should prefer CC0 sources such as Kenney, Quaternius, KayKit, ambientCG, and Poly Haven, with every imported file recorded in `ASSET_CREDITS.md`.

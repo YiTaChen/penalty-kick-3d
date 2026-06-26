@@ -1,6 +1,7 @@
 import { chooseKeeperAction, type KeeperProfile } from "../domain/keeper";
 import { evaluatePenalty, type KeeperAction, type PenaltyOutcome } from "../domain/result";
 import { createShot, type Shot, type ShotInput } from "../domain/shot";
+import type { DefenderConfig } from "../domain/defender";
 
 export type RoundTally = {
   score: number;
@@ -17,11 +18,12 @@ export function resolvePenaltyRound(
   aim: ShotInput,
   keeperProfile: KeeperProfile,
   random: () => number = Math.random,
-  previous: RoundTally = { score: 0, attempts: 0 }
+  previous: RoundTally = { score: 0, attempts: 0 },
+  defenders: DefenderConfig[] = []
 ): PenaltyRound {
   const shot = createShot(aim);
   const keeper = chooseKeeperAction(shot, keeperProfile, random);
-  const outcome = evaluatePenalty(shot, keeper);
+  const outcome = evaluatePenalty(shot, keeper, defenders);
 
   return {
     shot,

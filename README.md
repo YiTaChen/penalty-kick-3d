@@ -9,7 +9,9 @@ Repository: <https://github.com/YiTaChen/penalty-kick-3d>
 - 3D low-poly penalty-kick scene rendered with React Three Fiber.
 - Pointer drag aim controls for target, power, and curve.
 - Tested shot physics, goal/result detection, keeper decision logic, and round scoring.
-- Adjustable keeper difficulty.
+- Five-level campaign with escalating keeper difficulty.
+- Additional defending players in later levels, including tested blocked-shot outcomes.
+- Level selector for quick demoing and practice.
 - Responsive desktop/mobile HUD.
 - Self-generated ball, pitch, goal, net, player, and keeper geometry.
 
@@ -28,7 +30,8 @@ Repository: <https://github.com/YiTaChen/penalty-kick-3d>
 4. Keeper decision logic. Done.
 5. Aim mapping and round scoring. Done.
 6. Interactive Three.js scene. Done.
-7. Documentation, asset credits, and CI. Done.
+7. Campaign levels and defender blocking. Done.
+8. Documentation, asset credits, and CI. Done.
 
 ## Commands
 

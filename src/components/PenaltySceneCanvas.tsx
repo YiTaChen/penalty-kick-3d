@@ -2,11 +2,13 @@ import { Line, PerspectiveCamera, Text } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
+import type { DefenderConfig } from "../domain/defender";
 import { GOAL, type Shot, type ShotInput, simulateShotPosition } from "../domain/shot";
 import type { KeeperAction, PenaltyOutcome } from "../domain/result";
 
 type SceneProps = {
   aim: ShotInput;
+  defenders: DefenderConfig[];
   keeper: KeeperAction | null;
   launchTime: number | null;
   outcome: PenaltyOutcome | null;
@@ -37,13 +39,14 @@ function CameraRig() {
   return null;
 }
 
-function PenaltyScene({ aim, keeper, launchTime, outcome, phase, previewShot, shot }: SceneProps) {
+function PenaltyScene({ aim, defenders, keeper, launchTime, outcome, phase, previewShot, shot }: SceneProps) {
   return (
     <group>
       <Pitch />
       <Goal />
       <PenaltySpot />
       <Player aim={aim} phase={phase} />
+      <DefenderWall defenders={defenders} phase={phase} />
       <Keeper action={keeper} phase={phase} />
       <Ball launchTime={launchTime} phase={phase} shot={shot} />
       {phase === "aiming" ? <AimPreview shot={previewShot} /> : null}
@@ -191,6 +194,30 @@ function Keeper({ action, phase }: { action: KeeperAction | null; phase: ScenePr
   );
 }
 
+function DefenderWall({ defenders, phase }: { defenders: DefenderConfig[]; phase: SceneProps["phase"] }) {
+  return (
+    <group>
+      {defenders.map((defender, index) => {
+        const lift = phase === "flying" || phase === "result" ? defender.jump : 0;
+
+        return (
+          <group key={defender.id} position={[defender.x, lift, defender.z]} rotation-y={(index - defenders.length / 2) * 0.05}>
+            <CharacterBody shirt="#2563eb" shorts="#111827" />
+            <mesh castShadow position={[-0.45, 1.36, 0]} rotation-z={0.9}>
+              <boxGeometry args={[0.12, 0.58, 0.12]} />
+              <meshStandardMaterial color="#2563eb" roughness={0.72} />
+            </mesh>
+            <mesh castShadow position={[0.45, 1.36, 0]} rotation-z={-0.9}>
+              <boxGeometry args={[0.12, 0.58, 0.12]} />
+              <meshStandardMaterial color="#2563eb" roughness={0.72} />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 function CharacterBody({ shirt, shorts }: { shirt: string; shorts: string }) {
   return (
     <group>
@@ -265,7 +292,14 @@ function AimPreview({ shot }: { shot: Shot }) {
 }
 
 function OutcomeMarker({ outcome }: { outcome: PenaltyOutcome }) {
-  const color = outcome.type === "goal" ? "#22c55e" : outcome.type === "saved" ? "#60a5fa" : "#f97316";
+  const color =
+    outcome.type === "goal"
+      ? "#22c55e"
+      : outcome.type === "saved"
+        ? "#60a5fa"
+        : outcome.type === "blocked"
+          ? "#fb7185"
+          : "#f97316";
 
   return (
     <mesh position={[outcome.impact.x, outcome.impact.y, GOAL.planeZ + 0.08]}>

@@ -1,8 +1,9 @@
-import { RotateCcw, Target, Zap } from "lucide-react";
+import { ChevronRight, RotateCcw, Target, Trophy, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { evaluatePenalty, type KeeperAction, type PenaltyOutcome } from "../domain/result";
 import { createShot, type Shot, type ShotInput } from "../domain/shot";
 import { createAimFromDrag } from "../game/aim";
+import { LEVELS, getLevel, resolveLevelProgress } from "../game/levels";
 import { resolvePenaltyRound } from "../game/penaltyGame";
 import { PenaltySceneCanvas } from "./PenaltySceneCanvas";
 
@@ -30,7 +31,7 @@ const OUTCOME_LABEL: Record<PenaltyOutcome["type"], string> = {
 
 export function PenaltyExperience() {
   const [phase, setPhase] = useState<Phase>("ready");
-  const [difficulty, setDifficulty] = useState(0.42);
+  const [levelIndex, setLevelIndex] = useState(0);
   const [dragStart, setDragStart] = useState<PointerPoint | null>(null);
   const [dragCurrent, setDragCurrent] = useState<PointerPoint | null>(null);
   const [aim, setAim] = useState<ShotInput>(DEFAULT_AIM);
@@ -41,7 +42,13 @@ export function PenaltyExperience() {
   const [attempts, setAttempts] = useState(0);
   const [launchTime, setLaunchTime] = useState<number | null>(null);
 
+  const currentLevel = getLevel(levelIndex);
   const previewShot = useMemo(() => createShot(aim), [aim]);
+  const levelProgress =
+    attempts >= currentLevel.attempts
+      ? resolveLevelProgress({ levelIndex, score, attempts })
+      : null;
+  const levelFinished = levelProgress !== null && phase === "result";
 
   useEffect(() => {
     if (!shot || phase !== "flying") {
@@ -74,7 +81,7 @@ export function PenaltyExperience() {
   }
 
   function handlePointerDown(event: React.PointerEvent<HTMLElement>) {
-    if (phase === "flying") {
+    if (phase === "flying" || levelFinished) {
       return;
     }
 
@@ -110,7 +117,13 @@ export function PenaltyExperience() {
       deltaX: point.x - dragStart.x,
       deltaY: point.y - dragStart.y
     });
-    const round = resolvePenaltyRound(nextAim, { difficulty }, Math.random, { score, attempts });
+    const round = resolvePenaltyRound(
+      nextAim,
+      { difficulty: currentLevel.keeperDifficulty },
+      Math.random,
+      { score, attempts },
+      currentLevel.defenders
+    );
 
     setAim(nextAim);
     setShot(round.shot);
@@ -135,6 +148,30 @@ export function PenaltyExperience() {
     setLaunchTime(null);
   }
 
+  function resetLevel() {
+    setScore(0);
+    setAttempts(0);
+    resetRound();
+  }
+
+  function advanceLevel() {
+    if (!levelProgress) {
+      return;
+    }
+
+    setLevelIndex(levelProgress.levelIndex);
+    setScore(0);
+    setAttempts(0);
+    resetRound();
+  }
+
+  function restartCampaign() {
+    setLevelIndex(0);
+    setScore(0);
+    setAttempts(0);
+    resetRound();
+  }
+
   const visibleOutcome = outcome && phase === "result" ? OUTCOME_LABEL[outcome.type] : null;
   const resolvedShot = shot ?? previewShot;
   const resolvedKeeper =
@@ -148,7 +185,8 @@ export function PenaltyExperience() {
           reactionDelay: 0.4
         }
       : null);
-  const liveOutcome = shot && keeper ? evaluatePenalty(shot, keeper) : null;
+  const liveOutcome = shot && keeper ? evaluatePenalty(shot, keeper, currentLevel.defenders) : null;
+  const levelGoalText = `${currentLevel.requiredGoals} goals needed`;
 
   return (
     <main
@@ -160,6 +198,7 @@ export function PenaltyExperience() {
     >
       <PenaltySceneCanvas
         aim={aim}
+        defenders={currentLevel.defenders}
         keeper={resolvedKeeper}
         launchTime={launchTime}
         outcome={liveOutcome}
@@ -172,10 +211,15 @@ export function PenaltyExperience() {
         <div>
           <p className="eyebrow">Penalty Kick 3D</p>
           <h1>12 碼射門練習場</h1>
+          <div className="level-line">
+            <span>{currentLevel.name}</span>
+            <span>Level {levelIndex + 1} / {LEVELS.length}</span>
+          </div>
         </div>
         <div className="score-block" aria-label="score">
           <span>Score</span>
           <strong>{score} / {attempts}</strong>
+          <small>{levelGoalText}</small>
         </div>
       </section>
 
@@ -188,19 +232,10 @@ export function PenaltyExperience() {
           <Target size={18} aria-hidden="true" />
           <span style={{ "--value": 1 - Math.abs(aim.curve) * 0.5 } as React.CSSProperties} />
         </div>
-        <label className="difficulty-control">
-          <span>Keeper</span>
-          <input
-            aria-label="Keeper difficulty"
-            max="1"
-            min="0"
-            step="0.01"
-            type="range"
-            value={difficulty}
-            onChange={(event) => setDifficulty(Number(event.target.value))}
-            onPointerDown={(event) => event.stopPropagation()}
-          />
-        </label>
+        <div className="meter difficulty-meter" aria-label="keeper difficulty">
+          <Trophy size={18} aria-hidden="true" />
+          <span style={{ "--value": currentLevel.keeperDifficulty } as React.CSSProperties} />
+        </div>
         <button
           aria-label="Reset round"
           className="icon-button"
@@ -227,6 +262,49 @@ export function PenaltyExperience() {
       ) : null}
 
       {visibleOutcome ? <div className={`result-flash ${outcome?.type}`}>{visibleOutcome}</div> : null}
+
+      {levelFinished && levelProgress ? (
+        <section className="level-summary" aria-label="level summary">
+          <p className="eyebrow">{levelProgress.completed ? "Level Clear" : "Try Again"}</p>
+          <h2>
+            {score} / {currentLevel.attempts}
+            <span>{currentLevel.requiredGoals} required</span>
+          </h2>
+          <div className="summary-actions">
+            {levelProgress.campaignComplete ? (
+              <button
+                className="text-button"
+                type="button"
+                onClick={restartCampaign}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                <RotateCcw size={18} aria-hidden="true" />
+                Restart
+              </button>
+            ) : levelProgress.completed ? (
+              <button
+                className="text-button"
+                type="button"
+                onClick={advanceLevel}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                <ChevronRight size={18} aria-hidden="true" />
+                Next Level
+              </button>
+            ) : (
+              <button
+                className="text-button"
+                type="button"
+                onClick={resetLevel}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                <RotateCcw size={18} aria-hidden="true" />
+                Retry
+              </button>
+            )}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

@@ -1,11 +1,4 @@
-export type DefenderConfig = {
-  id: string;
-  x: number;
-  z: number;
-  width: number;
-  height: number;
-  jump: number;
-};
+import type { DefenderConfig } from "../domain/defender";
 
 export type LevelConfig = {
   id: string;

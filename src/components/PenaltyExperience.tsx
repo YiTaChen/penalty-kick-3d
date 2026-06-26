@@ -24,7 +24,8 @@ const OUTCOME_LABEL: Record<PenaltyOutcome["type"], string> = {
   goal: "GOAL",
   saved: "SAVED",
   miss: "MISS",
-  woodwork: "POST"
+  woodwork: "POST",
+  blocked: "BLOCKED"
 };
 
 export function PenaltyExperience() {

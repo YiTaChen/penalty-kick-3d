@@ -42,4 +42,41 @@ describe("evaluatePenalty", () => {
 
     expect(evaluatePenalty(shot, action).type).toBe("saved");
   });
+
+  it("is blocked when the ball path intersects a defender before the goal", () => {
+    const shot = createShot({ targetX: 0, targetY: 1.2, power: 0.72, curve: 0 });
+
+    expect(
+      evaluatePenalty(shot, undefined, [
+        { id: "central-wall", x: 0, z: -6, width: 0.8, height: 1.8, jump: 0 }
+      ])
+    ).toMatchObject({
+      type: "blocked",
+      defenderId: "central-wall"
+    });
+  });
+
+  it("does not block a shot that passes outside a defender body", () => {
+    const shot = createShot({ targetX: 2.6, targetY: 1.55, power: 0.78, curve: 0 });
+
+    expect(
+      evaluatePenalty(shot, undefined, [
+        { id: "central-wall", x: 0, z: -6, width: 0.62, height: 1.8, jump: 0 }
+      ]).type
+    ).not.toBe("blocked");
+  });
+
+  it("reports the first defender hit along the flight path", () => {
+    const shot = createShot({ targetX: 0, targetY: 1.1, power: 0.7, curve: 0 });
+
+    expect(
+      evaluatePenalty(shot, undefined, [
+        { id: "back-wall", x: 0, z: -7, width: 0.8, height: 1.8, jump: 0 },
+        { id: "front-wall", x: 0, z: -4.5, width: 0.8, height: 1.8, jump: 0 }
+      ])
+    ).toMatchObject({
+      type: "blocked",
+      defenderId: "front-wall"
+    });
+  });
 });

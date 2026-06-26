@@ -172,6 +172,13 @@ export function PenaltyExperience() {
     resetRound();
   }
 
+  function selectLevel(nextLevelIndex: number) {
+    setLevelIndex(nextLevelIndex);
+    setScore(0);
+    setAttempts(0);
+    resetRound();
+  }
+
   const visibleOutcome = outcome && phase === "result" ? OUTCOME_LABEL[outcome.type] : null;
   const resolvedShot = shot ?? previewShot;
   const resolvedKeeper =
@@ -236,6 +243,20 @@ export function PenaltyExperience() {
           <Trophy size={18} aria-hidden="true" />
           <span style={{ "--value": currentLevel.keeperDifficulty } as React.CSSProperties} />
         </div>
+        <label className="level-select" onPointerDown={(event) => event.stopPropagation()}>
+          <span>Level</span>
+          <select
+            aria-label="Select level"
+            value={levelIndex}
+            onChange={(event) => selectLevel(Number(event.target.value))}
+          >
+            {LEVELS.map((level, index) => (
+              <option key={level.id} value={index}>
+                {index + 1}. {level.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           aria-label="Reset round"
           className="icon-button"
